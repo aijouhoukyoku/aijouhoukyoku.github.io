@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>AI情報局</title>
+    <meta
+      name="description"
+      content="AIがCPUを設計した ― 人間の設計図なしで、命令からチップの図面まで作った。AI情報局、毎朝更新。"
+    />
+    <!-- SNS link card (Threads etc.): show the poster visual large -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AI情報局" />
+    <meta property="og:title" content="AI情報局" />
+    <meta
+      property="og:description"
+      content="AIがCPUを設計した ― 人間の設計図なしで、命令からチップの図面まで作った。AI情報局、毎朝更新。"
+    />
+    <meta property="og:image" content="https://aijouhoukyoku.github.io/assets/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1350" />
+    <meta property="og:image:alt" content="AI情報局 ― 金色に光るロボットのポスター" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AI情報局" />
+    <meta
+      name="twitter:description"
+      content="AIがCPUを設計した ― 人間の設計図なしで、命令からチップの図面まで作った。AI情報局、毎朝更新。"
+    />
+    <meta name="twitter:image" content="https://aijouhoukyoku.github.io/assets/og-image.jpg" />
+    <meta name="twitter:image:alt" content="AI情報局 ― 金色に光るロボットのポスター" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #05080f;
+        --panel: #0a1322;
+        --panel-2: #0d1830;
+        --gold: #e9b558;
+        --gold-hi: #f7d98a;
+        --gold-dim: rgba(233, 181, 88, 0.28);
+        --text: #f3f1ea;
+        --muted: #a7b2c4;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      button { font-family: inherit; cursor: pointer; }
+      button, [role="button"] { min-height: 2.25rem; }
+
+      .stage {
+        position: relative;
+        max-width: 1060px; margin: 0 auto;
+        padding: clamp(10px, 2.5vw, 28px) clamp(10px, 2.5vw, 24px) 40px;
+        perspective: 1600px;
+      }
+
+      /* ================= poster (v6 layout, reproduced as-is) ================= */
+      .poster {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #070b14;
+        border: 1px solid rgba(233, 181, 88, 0.25);
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7), 0 4px 18px rgba(0, 0, 0, 0.5);
+        min-height: clamp(660px, 94svh, 920px);
+        display: flex;
+        transform: perspective(1600px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .poster-bgimg {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        object-fit: cover; object-position: right center;
+        animation: poster-drift 20s ease-in-out infinite alternate;
+      }
+      @keyframes poster-drift {
+        from { transform: scale(1.02); filter: brightness(0.97); }
+        to { transform: scale(1.08); filter: brightness(1.06); }
+      }
+      .poster-shade {
+        position: absolute; inset: 0;
+        background:
+          linear-gradient(90deg, rgba(5, 8, 15, 0.97) 0%, rgba(5, 8, 15, 0.93) 40%, rgba(5, 8, 15, 0.55) 66%, rgba(5, 8, 15, 0.12) 88%, rgba(5, 8, 15, 0.05) 100%),
+          linear-gradient(0deg, rgba(5, 8, 15, 0.72) 0%, rgba(5, 8, 15, 0) 26%),
+          linear-gradient(180deg, rgba(5, 8, 15, 0.55) 0%, rgba(5, 8, 15, 0) 22%);
+      }
+      .poster .glare {
+        position: absolute; inset: 0; z-index: 4; pointer-events: none;
+        background: radial-gradient(420px circle at var(--gx, 30%) var(--gy, 0%), rgba(247, 217, 138, 0.12), transparent 65%);
+        opacity: var(--glare-o, 0); transition: opacity 0.35s ease;
+      }
+      .poster-inner {
+        position: relative; z-index: 3;
+        display: flex; flex-direction: column;
+        width: 100%;
+        padding: clamp(20px, 4vw, 40px) clamp(18px, 4.5vw, 44px) clamp(18px, 3.5vw, 32px);
+      }
+      .poster-content { width: min(600px, 100%); }
+
+      /* top row: gold pill badge + date / language toggle (added UI) */
+      .poster-top {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+        width: 100%;
+      }
+      .badge-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+      .brand-pill {
+        display: inline-flex; align-items: center; min-height: 2.3rem;
+        padding: 4px 18px; border-radius: 999px;
+        background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+        color: #1a1206; font-weight: 900; font-size: 1.02rem; letter-spacing: 0.14em;
+        box-shadow: 0 4px 18px rgba(233, 181, 88, 0.35);
+      }
+      .badge-row time {
+        font-family: "Oswald", sans-serif; font-weight: 600;
+        font-size: 1.05rem; letter-spacing: 0.22em; color: #efe9da;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      }
+      .lang-toggle {
+        display: inline-flex; flex: none; border: 1px solid rgba(247, 217, 138, 0.45);
+        border-radius: 999px; overflow: hidden; background: rgba(5, 8, 15, 0.62);
+        backdrop-filter: blur(6px);
+      }
+      .lang-toggle button {
+        min-height: 2.4rem; padding: 0 16px; border: 0; background: transparent;
+        color: #d9d2bf; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em;
+      }
+      .lang-toggle button[aria-pressed="true"] { background: var(--gold); color: #131313; }
+
+      /* headline + caption */
+      .poster h1 {
+        margin: clamp(30px, 6vh, 58px) 0 0;
+        font-size: clamp(2.7rem, 8.6vw, 4.9rem); font-weight: 900;
+        line-height: 1.22; letter-spacing: 0.03em; color: var(--gold);
+        text-shadow: 0 6px 36px rgba(233, 181, 88, 0.3), 0 2px 0 rgba(0, 0, 0, 0.4);
+        word-break: keep-all; overflow-wrap: anywhere;
+      }
+      .poster h1 .ph { white-space: nowrap; }
+      .poster-caption {
+        margin: 16px 0 0;
+        font-size: clamp(1.18rem, 3.9vw, 1.65rem); font-weight: 900;
+        line-height: 1.55; letter-spacing: 0.02em; color: #fff;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+        word-break: keep-all; overflow-wrap: anywhere;
+      }
+      .poster-caption .ph { white-space: nowrap; }
+      .gold-rule { width: 76px; height: 3px; background: var(--gold); margin-top: 20px; box-shadow: 0 0 14px rgba(233, 181, 88, 0.55); }
+
+      /* numbered list */
+      .news-list { margin-top: clamp(24px, 4.5vh, 40px); display: flex; flex-direction: column; }
+      .item {
+        display: grid; grid-template-columns: 46px minmax(0, 1fr) 22px; gap: 14px; align-items: start;
+        width: 100%; text-align: left; padding: 15px 12px; margin: 0 -12px;
+        width: calc(100% + 24px);
+        border: 0; border-radius: 12px; background: transparent; color: var(--text);
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+      .item:hover, .item:focus-visible {
+        background: linear-gradient(90deg, rgba(233, 181, 88, 0.14), rgba(233, 181, 88, 0.03));
+        outline: none;
+      }
+      .item:active { transform: scale(0.99); }
+      .item .no {
+        font-family: "Oswald", sans-serif; font-weight: 700; color: var(--gold);
+        font-size: 2rem; line-height: 1.1;
+        text-shadow: 0 0 18px rgba(233, 181, 88, 0.35);
+      }
+      .item:hover .no, .item:focus-visible .no { color: var(--gold-hi); text-shadow: 0 0 24px rgba(247, 217, 138, 0.75); }
+      .item .item-name {
+        display: block; font-size: clamp(1.12rem, 3.4vw, 1.32rem); font-weight: 900;
+        line-height: 1.4; letter-spacing: 0.02em; color: #fff;
+        word-break: keep-all; overflow-wrap: anywhere;
+      }
+      .item .item-desc { display: block; margin-top: 4px; color: #ccd5e2; font-size: clamp(0.88rem, 2.6vw, 0.97rem); line-height: 1.75; }
+      .item .chev {
+        align-self: center; color: var(--gold); font-size: 1.3rem; font-weight: 700;
+        opacity: 0.75; transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .item:hover .chev { transform: translateX(3px); opacity: 1; }
+
+      /* IN OTHER NEWS divider */
+      .divider {
+        display: flex; align-items: center; gap: 14px;
+        margin: 13px 0 13px 60px;
+      }
+      .divider .dtext {
+        font-family: "Oswald", sans-serif; font-weight: 600; color: var(--gold);
+        font-size: 0.92rem; letter-spacing: 0.34em; white-space: nowrap;
+      }
+      .divider .dline { height: 1px; background: linear-gradient(90deg, var(--gold), rgba(233, 181, 88, 0.05)); flex: 1; }
+      .divider .dline:first-child { background: linear-gradient(90deg, rgba(233, 181, 88, 0.05), var(--gold)); }
+
+      /* poster footer */
+      .poster-foot {
+        margin-top: auto; padding-top: 34px;
+        font-size: 0.86rem; font-weight: 700; letter-spacing: 0.2em; color: #d8cfb6;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+      }
+
+      @media (max-width: 640px) {
+        .poster { min-height: 92svh; }
+        .poster-bgimg { object-position: 75% center; }
+        /* darker wash on phones: item text runs the full width over the robot,
+           so keep the shade strong until well past the text column */
+        .poster-shade {
+          background:
+            linear-gradient(90deg, rgba(5, 8, 15, 0.98) 0%, rgba(5, 8, 15, 0.96) 48%, rgba(5, 8, 15, 0.84) 78%, rgba(5, 8, 15, 0.58) 100%),
+            linear-gradient(0deg, rgba(5, 8, 15, 0.85) 0%, rgba(5, 8, 15, 0) 30%),
+            linear-gradient(180deg, rgba(5, 8, 15, 0.6) 0%, rgba(5, 8, 15, 0) 22%);
+        }
+        .divider { margin-left: 0; }
+
+        /* type scale for narrow screens: the gold headline stays on one line
+           (no orphaned "AI" drop) and body copy gets a touch larger */
+        .poster h1 {
+          margin-top: clamp(24px, 5vh, 44px);
+          font-size: clamp(2.15rem, 11vw, 2.95rem);
+        }
+        .poster-caption { font-size: clamp(1.12rem, 4.6vw, 1.3rem); }
+        /* Japanese caption: its two nowrap phrases overflow the right edge as
+           one line on phones, so break exactly at the phrase boundary
+           (人間の設計図なしで、/ 命令からチップの図面まで作った) into two lines */
+        html[lang="ja"] .poster-caption .ph { display: block; }
+        .item .item-desc { font-size: 0.93rem; }
+
+        /* finger-friendly targets (44px+) */
+        .lang-toggle button { min-height: 2.75rem; padding: 0 18px; font-size: 0.85rem; }
+        .item { padding-top: 17px; padding-bottom: 17px; }
+
+        /* chevron clearance: widen the chevron lane and pad the text column's
+           right side, so item descriptions never run up to or under the "›" */
+        .item { grid-template-columns: 46px minmax(0, 1fr) 30px; column-gap: 12px; }
+        .item > span:nth-child(2) { padding-right: 8px; }
+
+        /* English footer: shrink type and tracking on phones so
+           "AI News Bureau — updated every morning" stays on one clean line
+           instead of wrapping mid-phrase (Japanese footer is short, untouched) */
+        html[lang="en"] .poster-foot {
+          font-size: clamp(0.6rem, 3vw, 0.8rem);
+          letter-spacing: 0.1em;
+          white-space: nowrap;
+        }
+      }
+
+      /* very narrow phones (~320px): the headline's nowrap phrases sit close
+         to the poster's edge, so ease the size down a notch to keep them in */
+      @media (max-width: 340px) {
+        .poster h1 { font-size: 10.4vw; }
+      }
+
+      /* ================= popup sheet (added UI) ================= */
+      .sheet-backdrop {
+        position: fixed; inset: 0; z-index: 50; display: none;
+        background: rgba(3, 6, 12, 0.72); backdrop-filter: blur(5px);
+        align-items: flex-end; justify-content: center;
+      }
+      .sheet-backdrop.open { display: flex; }
+      .sheet {
+        width: min(680px, 100%); max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain;
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--gold-dim); border-bottom: 0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.6);
+        animation: sheet-in 0.32s cubic-bezier(0.22, 0.9, 0.3, 1);
+      }
+      @keyframes sheet-in {
+        from { transform: translateY(44px) scale(0.965); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+      }
+      @media (min-width: 720px) {
+        .sheet-backdrop { align-items: center; padding: 28px; }
+        .sheet { border-radius: 20px; border-bottom: 1px solid var(--gold-dim); }
+      }
+      .sheet-visual { position: relative; height: 210px; overflow: hidden; border-radius: 20px 20px 0 0; }
+      .sheet-visual img { width: 100%; height: 100%; object-fit: cover; animation: visual-in 0.55s ease; }
+      @keyframes visual-in {
+        from { transform: scale(1.14); filter: brightness(1.35); }
+        to { transform: scale(1); filter: brightness(1); }
+      }
+      .sheet-visual::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(6, 11, 22, 0.1), rgba(10, 19, 34, 0.92));
+      }
+      .sheet-close {
+        position: absolute; top: 12px; right: 12px; z-index: 3;
+        width: 44px; height: 44px; border-radius: 50%;
+        border: 1px solid rgba(247, 217, 138, 0.5); background: rgba(6, 11, 22, 0.72);
+        color: #fff; font-size: 1.15rem; line-height: 1;
+      }
+      .sheet-body { padding: 6px clamp(20px, 5vw, 34px) 34px; margin-top: -44px; position: relative; z-index: 2; }
+      .sheet-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.26em; color: var(--gold-hi); margin: 0; }
+      .sheet-body h2 {
+        margin: 8px 0 0; font-size: clamp(1.35rem, 5vw, 1.8rem); font-weight: 900; line-height: 1.4;
+        word-break: keep-all; overflow-wrap: anywhere;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+      }
+      .sheet-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+      .sheet-stats .chip {
+        flex: 1 1 120px; border: 1px solid rgba(233, 181, 88, 0.3); border-radius: 10px;
+        padding: 10px 12px; background: rgba(233, 181, 88, 0.06);
+      }
+      .sheet-stats .chip strong {
+        display: block; font-family: "Oswald", "Zen Kaku Gothic New", sans-serif; font-weight: 600; color: var(--gold);
+        font-size: 1.35rem; line-height: 1.1;
+      }
+      .sheet-stats .chip span { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; }
+      .sheet-detail { margin-top: 18px; color: #dde3ec; font-size: 0.95rem; line-height: 1.95; }
+      .sheet-detail p { margin: 0 0 14px; }
+      .sheet-en {
+        margin-top: 20px; padding: 16px 18px; border: 1px solid rgba(167, 178, 196, 0.25); border-radius: 10px;
+        color: #c9d2e0; font-size: 0.88rem; line-height: 1.85;
+      }
+      .sheet-en .en-label {
+        display: block; font-family: "Oswald", sans-serif; letter-spacing: 0.22em;
+        font-size: 0.68rem; color: var(--muted); margin-bottom: 8px;
+      }
+      .sheet-source { margin-top: 22px; }
+      .sheet-source a {
+        display: inline-flex; align-items: center; gap: 10px; min-height: 3rem; padding: 0 20px;
+        border-radius: 999px; background: var(--gold); color: #171106; font-weight: 900;
+        font-size: 0.9rem; text-decoration: none; letter-spacing: 0.04em;
+      }
+      .sheet-source .src-note { display: block; margin-top: 10px; color: var(--muted); font-size: 0.75rem; }
+
+      /* popup on phones: near full width, taller, bigger close target, safe-area padding */
+      @media (max-width: 640px) {
+        .sheet { max-height: 92dvh; }
+        .sheet-visual { height: 180px; }
+        .sheet-close { width: 48px; height: 48px; top: 10px; right: 10px; font-size: 1.3rem; }
+        .sheet-body { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .sheet, .sheet-visual img, .poster-bgimg { animation: none; }
+        .item, .item .chev { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <article class="poster" id="poster" aria-label="AI情報局 2026年11月24日号">
+        <img class="poster-bgimg" src="assets/poster-v6.webp" alt="" aria-hidden="true" />
+        <div class="poster-shade" aria-hidden="true"></div>
+        <div class="glare" aria-hidden="true"></div>
+
+        <div class="poster-inner">
+          <div class="poster-top">
+            <div class="badge-row">
+              <span class="brand-pill">AI情報局</span>
+              <time datetime="2026-11-24">2026.11.24</time>
+            </div>
+            <div class="lang-toggle" role="group" aria-label="Language / 言語">
+              <button type="button" id="btn-ja" aria-pressed="true">日本語</button>
+              <button type="button" id="btn-en" aria-pressed="false">EN</button>
+            </div>
+          </div>
+
+          <div class="poster-content">
+            <h1 data-i18n-html="headline"><span class="ph">AIがCPUを</span><span class="ph">設計した</span></h1>
+            <p class="poster-caption" data-i18n-html="caption"><span class="ph">人間の設計図なしで、</span><span class="ph">命令からチップの図面まで作った</span></p>
+            <div class="gold-rule" aria-hidden="true"></div>
+
+            <div class="news-list">
+              <button type="button" class="item" data-open="cpu">
+                <span class="no" aria-hidden="true">1</span>
+                <span>
+                  <span class="item-name">Architect Labs</span>
+                  <span class="item-desc" data-i18n="e1">AIの集団にCPUの設計を丸ごと任せた、米スタートアップ</span>
+                </span>
+                <span class="chev" aria-hidden="true">›</span>
+              </button>
+
+              <div class="divider" aria-hidden="true">
+                <span class="dline"></span>
+                <span class="dtext">IN OTHER NEWS</span>
+                <span class="dline"></span>
+              </div>
+
+              <button type="button" class="item" data-open="conference">
+                <span class="no" aria-hidden="true">2</span>
+                <span>
+                  <span class="item-name" data-i18n="n2">AI同士の学会</span>
+                  <span class="item-desc" data-i18n="e2">936体のAIが12週間で論文936本。自分たちで査読する雑誌まで作った</span>
+                </span>
+                <span class="chev" aria-hidden="true">›</span>
+              </button>
+
+              <button type="button" class="item" data-open="shopping">
+                <span class="no" aria-hidden="true">3</span>
+                <span>
+                  <span class="item-name" data-i18n="n3">AIが買い物して会計まで</span>
+                  <span class="item-desc" data-i18n="e3">米ウォルマートが、AIに買い物から支払いまで任せられる仕組みを始めた</span>
+                </span>
+                <span class="chev" aria-hidden="true">›</span>
+              </button>
+            </div>
+          </div>
+
+          <footer class="poster-foot" data-i18n="footer">AI情報局 — 毎朝更新</footer>
+        </div>
+      </article>
+    </main>
+
+    <!-- popup sheet -->
+    <div class="sheet-backdrop" id="sheetBackdrop">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="sheet">
+        <div class="sheet-visual">
+          <img id="sheetImg" src="assets/topic-cpu.webp" alt="" />
+          <button type="button" class="sheet-close" id="sheetClose" aria-label="閉じる / Close">×</button>
+        </div>
+        <div class="sheet-body">
+          <p class="sheet-tag" id="sheetTag"></p>
+          <h2 id="sheetTitle"></h2>
+          <div class="sheet-stats" id="sheetStats"></div>
+          <div class="sheet-detail" id="sheetDetail"></div>
+          <div class="sheet-en" id="sheetEnWrap">
+            <span class="en-label">ENGLISH</span>
+            <span id="sheetEn"></span>
+          </div>
+          <div class="sheet-source">
+            <a id="sheetSourceLink" href="#" target="_blank" rel="noopener"></a>
+            <span class="src-note" id="sheetSourceNote"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ---------------- language dictionary (poster strings) ---------------- */
+        var I18N = {
+          ja: {
+            headline: '<span class="ph">AIがCPUを</span><span class="ph">設計した</span>',
+            caption: '<span class="ph">人間の設計図なしで、</span><span class="ph">命令からチップの図面まで作った</span>',
+            e1: "AIの集団にCPUの設計を丸ごと任せた、米スタートアップ",
+            n2: "AI同士の学会",
+            e2: "936体のAIが12週間で論文936本。自分たちで査読する雑誌まで作った",
+            n3: "AIが買い物して会計まで",
+            e3: "米ウォルマートが、AIに買い物から支払いまで任せられる仕組みを始めた",
+            footer: "AI情報局 — 毎朝更新"
+          },
+          en: {
+            headline: '<span class="ph">An AI designed</span> <span class="ph">a CPU</span>',
+            caption: '<span class="ph">With no human blueprint,</span> <span class="ph">it went from the instruction set</span> <span class="ph">to the final chip layout.</span>',
+            e1: "The U.S. startup that let a swarm of AIs design a whole CPU",
+            n2: "A Conference of AIs",
+            e2: "936 AIs wrote 936 papers in 12 weeks — and started their own peer-reviewed journal.",
+            n3: "AI Shops and Checks Out",
+            e3: "Walmart now lets an AI shop for you and pay, inside the chat.",
+            footer: "AI News Bureau — updated every morning"
+          }
+        };
+
+        /* ---------------- topic details for the popup ---------------- */
+        var TOPICS = {
+          cpu: {
+            img: "assets/topic-cpu.webp",
+            imgAlt: { ja: "金色に光るCPUに手を伸ばすロボットの手のイラスト", en: "Illustration of a robot hand reaching toward a glowing golden CPU" },
+            tag: { ja: "AIが設計したCPU", en: "AI-DESIGNED CPU" },
+            title: { ja: "AIがCPUを設計した ― 人間の設計図なしで作り上げた", en: "An AI designed a CPU — no human blueprint" },
+            stats: [
+              { v: "4.6倍", l: { ja: "同じ電気でできる仕事の量（普通のCPUと比べて）", en: "work done on the same electricity (vs an ordinary CPU)" } },
+              { v: { ja: "試算", en: "SIM" }, l: { ja: "4.6倍という数字はコンピューター上の試算", en: "the 4.6x figure comes from computer simulation" } },
+              { v: "0", l: { ja: "実際に作られたチップの数（まだ試算の段階）", en: "physical chips built so far — still at the simulation stage" } }
+            ],
+            detail: {
+              ja: [
+                "米スタートアップのArchitect Labsが、AIの集団にCPUの設計を丸ごと任せました。命令の決まりから回路、チップの最終的な図面まで、人間が設計図を描かずに作り上げたそうです。",
+                "コンピューター上の試算では、普通のCPUと比べて同じ電気で4.6倍の仕事ができるとのこと。ただし、まだ実物のチップは作られていません。比べたCPUも名前の明かされていない小さめの設計で、数字はあくまで試算です。"
+              ],
+              en: [
+                "U.S. startup Architect Labs handed the entire design of a CPU to a swarm of AI agents — the instruction set, the circuitry, the checks, and the final chip layout — with no human blueprint.",
+                "In computer simulations, it did 4.6 times the work of an ordinary CPU on the same electricity. But no physical chip has been built yet, and the comparison CPU is a smaller, unnamed design — so the number is a simulation, not a measurement."
+              ]
+            },
+            sourceName: { ja: "出典：Notebookcheck の記事を読む", en: "Source: Notebookcheck article" },
+            sourceNote: { ja: "Notebookcheck による、AIが設計したCPUの報道", en: "Notebookcheck's report on the AI-designed CPU" },
+            sourceUrl: "https://www.notebookcheck.net/AMD-and-Intel-move-over-AI-designed-an-all-new-CPU-and-claims-it-is-4-6x-more-efficient.1455225.0.html"
+          },
+          conference: {
+            img: "assets/topic-conference.webp",
+            imgAlt: { ja: "円形のホールに集まった無数のロボットのイラスト", en: "Illustration of countless robots gathered in a circular hall" },
+            tag: { ja: "AI同士の学会", en: "AI RESEARCH" },
+            title: { ja: "AI同士の学会 ― 936体が論文を書き合った", en: "A conference of AIs — 936 agents writing papers together" },
+            stats: [
+              { v: "936本", l: { ja: "12週間で書き上げた論文の数", en: "papers written in 12 weeks" } },
+              { v: "35", l: { ja: "参加した研究室の数（スタンフォードやMITなど）", en: "labs taking part, including Stanford and MIT" } },
+              { v: "9,500回", l: { ja: "AI同士のやり取りの回数", en: "messages the AIs exchanged" } }
+            ],
+            detail: {
+              ja: [
+                "スタンフォードやMITなど35の研究室が、936体のAIを12週間、同じ研究サイトとチャット部屋に放しました。AIたちはテーマを決め、実験をして、論文を936本も書き上げ、9,500回もやり取りしました。",
+                "最後には自分たちで論文をチェックし合う雑誌まで作ったそうです。論文の中には博士レベルのものもあるそうですが、多くはまだ小さな一歩の積み重ね、という声もあります。"
+              ],
+              en: [
+                "Thirty-five labs, including Stanford and MIT, set 936 AI agents loose for 12 weeks on a shared research site and chat space. The agents picked topics, ran experiments, wrote 936 papers, and exchanged 9,500 messages.",
+                "In the end they even started their own journal to review each other's work. Some papers are said to be PhD-level, though many are still small, incremental steps."
+              ]
+            },
+            sourceName: { ja: "出典：Science の記事を読む", en: "Source: Science article" },
+            sourceNote: { ja: "科学誌 Science によるレポート", en: "Report in the journal Science" },
+            sourceUrl: "https://www.science.org/content/article/exclusive-i-got-eavesdrop-ai-agents-doing-science-it-was-eye-opening"
+          },
+          shopping: {
+            img: "assets/topic-shopping.webp",
+            imgAlt: { ja: "買い物カゴに光る商品を入れる金色のロボットの手のイラスト", en: "Illustration of a golden robot hand placing a glowing item into a shopping cart" },
+            tag: { ja: "AIの買い物", en: "AI SHOPPING" },
+            title: { ja: "AIが買い物して会計まで ― ウォルマートの新しい仕組み", en: "AI shops and checks out — Walmart's new gateway" },
+            stats: [
+              { v: { ja: "会計まで", en: "TO PAYMENT" }, l: { ja: "探す・カゴに入れる・支払いをAIが担当", en: "the AI searches, fills the cart and pays" } },
+              { v: { ja: "上限額", en: "YOUR LIMIT" }, l: { ja: "使う人が決めた金額を超える買い物はできない", en: "it can't spend past the limit you set" } },
+              { v: { ja: "渡さない", en: "NEVER SHARED" }, l: { ja: "カード情報がAIに渡ることはない", en: "your card details never reach the AI" } }
+            ],
+            detail: {
+              ja: [
+                "米ウォルマートが、Metaの買い物AI「Muse」に、買い物から支払いまで任せられる仕組みを始めました。会話の中で「テレビのセール品を探して」と頼むと、AIが商品を探してカゴに入れ、そのまま会計まで済ませます。",
+                "使う人が決めた上限額を超える買い物はできず、買ったものは別々に記録されます。カードの情報がAIに渡ることはありません。"
+              ],
+              en: [
+                "Walmart has opened a gateway that lets Meta's shopping AI, Muse, handle shopping from search to payment. Ask in the chat for a TV deal, and the AI finds it, fills the cart, and checks out.",
+                "It can't spend past a limit you set, purchases are recorded separately, and your card details are never shared with the AI."
+              ]
+            },
+            sourceName: { ja: "出典：Unite.AI の記事を読む", en: "Source: Unite.AI article" },
+            sourceNote: { ja: "Unite.AI によるウォルマートの発表の報道", en: "Unite.AI's report on Walmart's agent gateway" },
+            sourceUrl: "https://www.unite.ai/walmart-enables-muse-shopping-through-its-agent-gateway/"
+          }
+        };
+
+        var lang = "ja";
+        var lastFocus = null;
+
+        /* ---------------- language toggle ---------------- */
+        function applyLang(next) {
+          lang = next;
+          document.documentElement.lang = next === "ja" ? "ja" : "en";
+          var dict = I18N[next];
+          var nodes = document.querySelectorAll("[data-i18n]");
+          for (var i = 0; i < nodes.length; i++) {
+            var key = nodes[i].getAttribute("data-i18n");
+            if (dict[key]) nodes[i].textContent = dict[key];
+          }
+          var htmlNodes = document.querySelectorAll("[data-i18n-html]");
+          for (var j = 0; j < htmlNodes.length; j++) {
+            var hkey = htmlNodes[j].getAttribute("data-i18n-html");
+            if (dict[hkey]) htmlNodes[j].innerHTML = dict[hkey];
+          }
+          document.getElementById("btn-ja").setAttribute("aria-pressed", next === "ja" ? "true" : "false");
+          document.getElementById("btn-en").setAttribute("aria-pressed", next === "en" ? "true" : "false");
+        }
+        document.getElementById("btn-ja").addEventListener("click", function () { applyLang("ja"); });
+        document.getElementById("btn-en").addEventListener("click", function () { applyLang("en"); });
+
+        /* ---------------- popup sheet ---------------- */
+        var backdrop = document.getElementById("sheetBackdrop");
+        var sheet = document.getElementById("sheet");
+        var closeBtn = document.getElementById("sheetClose");
+
+        function openTopic(id) {
+          var t = TOPICS[id];
+          if (!t) return;
+          lastFocus = document.activeElement;
+          var img = document.getElementById("sheetImg");
+          img.src = t.img;
+          img.alt = t.imgAlt[lang];
+          document.getElementById("sheetTag").textContent = t.tag[lang];
+          document.getElementById("sheetTitle").textContent = t.title[lang];
+
+          var statsHtml = "";
+          for (var i = 0; i < t.stats.length; i++) {
+            var sv = typeof t.stats[i].v === "object" ? t.stats[i].v[lang] : t.stats[i].v;
+            statsHtml += '<div class="chip"><strong>' + sv + "</strong><span>" + t.stats[i].l[lang] + "</span></div>";
+          }
+          document.getElementById("sheetStats").innerHTML = statsHtml;
+
+          var other = lang === "ja" ? "en" : "ja";
+          var detailHtml = "";
+          for (var k = 0; k < t.detail[lang].length; k++) {
+            detailHtml += "<p>" + t.detail[lang][k] + "</p>";
+          }
+          document.getElementById("sheetDetail").innerHTML = detailHtml;
+
+          /* the other language rides along inside the same popup */
+          var enWrap = document.getElementById("sheetEnWrap");
+          enWrap.querySelector(".en-label").textContent = other === "en" ? "ENGLISH" : "日本語";
+          document.getElementById("sheetEn").textContent = t.detail[other].join(" ");
+
+          var link = document.getElementById("sheetSourceLink");
+          link.href = t.sourceUrl;
+          link.textContent = t.sourceName[lang] + " →";
+          document.getElementById("sheetSourceNote").textContent = t.sourceNote[lang];
+
+          sheet.scrollTop = 0;
+          backdrop.classList.add("open");
+          document.body.style.overflow = "hidden";
+          closeBtn.focus();
+        }
+
+        function closeSheet() {
+          backdrop.classList.remove("open");
+          document.body.style.overflow = "";
+          if (lastFocus && lastFocus.focus) lastFocus.focus();
+        }
+
+        var openers = document.querySelectorAll("[data-open]");
+        for (var i = 0; i < openers.length; i++) {
+          openers[i].addEventListener("click", function () {
+            openTopic(this.getAttribute("data-open"));
+          });
+        }
+        closeBtn.addEventListener("click", closeSheet);
+        backdrop.addEventListener("click", function (e) {
+          if (e.target === backdrop) closeSheet();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && backdrop.classList.contains("open")) closeSheet();
+        });
+
+        /* ---------------- poster tilt + glare (fine pointers only) ---------------- */
+        var poster = document.getElementById("poster");
+        var finePointer = window.matchMedia("(pointer: fine)").matches;
+        var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (finePointer && !reducedMotion) {
+          var raf = null;
+          poster.addEventListener("pointermove", function (e) {
+            if (raf) return;
+            raf = requestAnimationFrame(function () {
+              raf = null;
+              var r = poster.getBoundingClientRect();
+              var px = (e.clientX - r.left) / r.width;
+              var py = (e.clientY - r.top) / r.height;
+              poster.style.setProperty("--ry", ((px - 0.5) * 2.4).toFixed(2) + "deg");
+              poster.style.setProperty("--rx", ((0.5 - py) * 1.8).toFixed(2) + "deg");
+              poster.style.setProperty("--gx", (px * 100).toFixed(1) + "%");
+              poster.style.setProperty("--gy", (py * 100).toFixed(1) + "%");
+              poster.style.setProperty("--glare-o", "1");
+            });
+          });
+          poster.addEventListener("pointerleave", function () {
+            poster.style.setProperty("--rx", "0deg");
+            poster.style.setProperty("--ry", "0deg");
+            poster.style.setProperty("--glare-o", "0");
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
